@@ -44,6 +44,10 @@ void monitor_init(void);
 void monitor_flush(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
 void monitor_flush2(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
 
+#if defined(MONITOR_EMSCRIPTEN) || defined(MONITOR_P44UTILS)
+void monitor_sdl_refr_core(void); /* called from Emscripten or P44utils loop */
+#endif
+
 /**********************
  *      MACROS
  **********************/

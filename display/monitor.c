@@ -66,7 +66,9 @@ typedef struct {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+#if !defined(MONITOR_P44UTILS)
 static int monitor_sdl_refr_thread(void * param);
+#endif
 static void window_create(monitor_t * m);
 static void window_update(monitor_t * m);
 
@@ -89,7 +91,7 @@ static volatile bool sdl_quit_qry = false;
 int quit_filter(void * userdata, SDL_Event * event);
 static void monitor_sdl_clean_up(void);
 static void monitor_sdl_init(void);
-#ifdef MONITOR_EMSCRIPTEN
+#if defined(MONITOR_EMSCRIPTEN) || defined(MONITOR_P44UTILS)
 void monitor_sdl_refr_core(void); /* called from Emscripten loop */
 #else
 static void monitor_sdl_refr_core(void);
@@ -113,7 +115,7 @@ void monitor_init(void)
     monitor_sdl_init();
 #endif
 
-#ifndef MONITOR_EMSCRIPTEN
+#if !defined(MONITOR_EMSCRIPTEN) && !defined(MONITOR_P44UTILS)
     SDL_CreateThread(monitor_sdl_refr_thread, "sdl_refr", NULL);
     while(sdl_inited == false); /*Wait until 'sdl_refr' initializes the SDL*/
 #endif
@@ -237,6 +239,8 @@ void monitor_flush2(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t
  * It initializes SDL, handles drawing and the mouse.
  */
 
+#if !defined(MONITOR_P44UTILS)
+
 static int monitor_sdl_refr_thread(void * param)
 {
     (void)param;
@@ -256,6 +260,8 @@ static int monitor_sdl_refr_thread(void * param)
 
     return 0;
 }
+
+#endif
 
 int quit_filter(void * userdata, SDL_Event * event)
 {
@@ -310,7 +316,7 @@ static void monitor_sdl_init(void)
     sdl_inited = true;
 }
 
-#ifdef MONITOR_EMSCRIPTEN
+#if defined(MONITOR_EMSCRIPTEN) || defined(MONITOR_P44UTILS)
 void monitor_sdl_refr_core(void)
 #else
 static void monitor_sdl_refr_core(void)
@@ -329,7 +335,7 @@ static void monitor_sdl_refr_core(void)
     }
 #endif
 
-#if !defined(MONITOR_APPLE) && !defined(MONITOR_EMSCRIPTEN)
+#if (!defined(MONITOR_APPLE) || defined(MONITOR_P44UTILS)) && !defined(MONITOR_EMSCRIPTEN)
     SDL_Event event;
     while(SDL_PollEvent(&event)) {
 #if USE_MOUSE != 0
@@ -361,8 +367,10 @@ static void monitor_sdl_refr_core(void)
     }
 #endif /*MONITOR_APPLE*/
 
+#if !defined(MONITOR_P44UTILS)
     /*Sleep some time*/
     SDL_Delay(SDL_REFR_PERIOD);
+#endif
 
 }
 
@@ -372,7 +380,7 @@ static void window_create(monitor_t * m)
                               SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                               MONITOR_HOR_RES * MONITOR_ZOOM, MONITOR_VER_RES * MONITOR_ZOOM, 0);       /*last param. SDL_WINDOW_BORDERLESS to hide borders*/
 
-#if MONITOR_VIRTUAL_MACHINE || defined(MONITOR_EMSCRIPTEN)
+#if MONITOR_VIRTUAL_MACHINE || defined(MONITOR_EMSCRIPTEN) || defined(MONITOR_P44UTILS)
     m->renderer = SDL_CreateRenderer(m->window, -1, SDL_RENDERER_SOFTWARE);
 #else
     m->renderer = SDL_CreateRenderer(m->window, -1, 0);
